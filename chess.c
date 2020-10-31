@@ -56,7 +56,7 @@ board createBoard() {
     brd[i] = brd[0] + (SIZE * i);
   }
   //return pointer to array of pointers to rows
-  return startingPositions(brd);
+  return brd;
 }
 
 
@@ -176,6 +176,7 @@ void chess_unitTests() {
 
 void createBoard_test() {
   board brd = createBoard();
+  startingPositions(brd);
   printBoard(brd);
   freeBoard(brd);
   return;
