@@ -57,9 +57,11 @@ typedef enum dim {
 } dim;
 
 board createBoard();
+piece * createPiece(color color, pieceType type);
 void printPiece(piece * p);
-void freeBoard(board brd);
 void printBoard(board brd);
+void freeBoard(board brd);
+void freePieces(board brd);
 /******************************************************************************/
 //move.c
 typedef enum isValidMoveResult {

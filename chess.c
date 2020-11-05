@@ -17,6 +17,7 @@ board startingPositions(board brd);
 piece * createPiece(color color, pieceType type);
 void printPiece(piece * p);
 void freeBoard(board brd);
+void freePieces(board brd);
 void printBoard(board brd);
 //unit test functions
 void unitTests();
@@ -84,6 +85,7 @@ const static pieceType BOTTOM_ROW[] = {
 
 /* White start at bottom, black at top*/
 board startingPositions(board brd) {
+  freePieces(brd);
   for(int i = 0; i < SIZE; ++i) {
     brd[i][0] = createPiece(BLACK, TOP_ROW[i]);
     brd[i][1] = createPiece(BLACK, PAWN);
@@ -92,6 +94,25 @@ board startingPositions(board brd) {
   }
   return brd;
 }
+
+/* board loadBoard(char * str) { */
+/*   board brd = createBoard(); */
+
+/*   const char newline[2] = '\n'; */
+/*   char *token; */
+
+/*   /\* get the first token *\/ */
+/*   token = strtok(str, newline); */
+
+/*   /\* walk through other tokens *\/ */
+/*   while( token != NULL ) { */
+/*     printf( " %s\n", token ); */
+
+/*     token = strtok(NULL, s); */
+/*   } */
+
+/*   return(0); */
+/* } */
 
 piece * createPiece(color color, pieceType type) {
   piece * pce = calloc(1, sizeof(piece));
@@ -112,8 +133,8 @@ const static char * pieceTypeString[] = {
 };
 
 const static char * colorString[] = {
-                               "BLACK",
-                               "WHITE"
+                                     "BLACK",
+                                     "WHITE"
 };
 
 void printPiece(piece * p) {
@@ -136,15 +157,21 @@ void printBoard(board brd) {
   printf("\n");
 }
 
+void freePieces(board brd) {
+  for(int i = 0; i < SIZE ; ++i) {
+      for(int j = 0; j < SIZE; ++j) {
+        if(brd[i][j] != NULL) {
+          free(brd[i][j]);
+        }
+      }
+  }
+}
+
 /* Frees a grid allocated with allocateGrid function */
 void freeBoard(board brd) {
-  for(int i = 0; i < (SIZE * SIZE); ++i) {
-    if(brd[0][i] != NULL) {
-      free(brd[0][i]);
-    }
-  }
-  free((brd[0]));//frees the large char array malloc
-  free((brd));//frees the smaller pointer array malloc
+  freePieces(brd);
+  free((brd[0]));
+  free((brd));
 }
 
 void unitTests()
@@ -158,7 +185,7 @@ void unitTests()
   printf("\n\n\n********************************************************************\n");
   printf("\n*                       Testing move.c                             *\n\n");
   printf("********************************************************************\n\n");
-   move_unitTests();
+  move_unitTests();
 
 }
 
@@ -167,7 +194,7 @@ void chess_unitTests() {
   sput_start_testing();
   sput_set_output_stream(NULL);
 
-  sput_enter_suite("testReadFile()");
+  sput_enter_suite("createBoard");
   sput_run_test(createBoard_test);
   sput_leave_suite();
 
@@ -177,6 +204,13 @@ void chess_unitTests() {
 void createBoard_test() {
   board brd = createBoard();
   startingPositions(brd);
+  printBoard(brd);
+  freeBoard(brd);
+  return;
+}
+
+void loadBoard_test() {
+  board brd = createBoard();
   printBoard(brd);
   freeBoard(brd);
   return;
