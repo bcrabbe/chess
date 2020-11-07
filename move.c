@@ -104,7 +104,7 @@ bool pawn(board brd, int start[2], int end[2]) {
   if(abs(move[Y]) > 2) return false;
   if(abs(move[Y]) == 2 && mover->hasMoved) return false;
   //if it move horizontally it must take a piece or en passent
-  if(abs(move[X]) == 1 && ((brd[end[X]][end[Y]] == NULL) || isEnPassant(brd, start, end)))
+  if(abs(move[X]) == 1 && ((brd[end[X]][end[Y]] == NULL) || isEnPassant(brd, start, end))) return false;
   //black starts at the top and moves down
   if(mover->color == BLACK && sign(move[Y]) == -1) return false;
   if(mover->color == WHITE && sign(move[Y]) == 1) return false;
@@ -184,7 +184,7 @@ void pawn_unitTest() {
   sput_fail_unless(isValidMove(brd, blkStart, blkEndSingle), "1 postion move");
   sput_fail_unless(isValidMove(brd, blkStart, blkEndDouble), "2 postion move");
   sput_fail_unless(isValidMove(brd, blkStart, blkEndTake), "valid take");
-  sput_fail_unless(isValidMove(brd, blkStart, blkEndTake2), "valid take");
+  sput_fail_unless(!isValidMove(brd, blkStart, blkEndTake2), "valid take, no piece there");
 
   freeBoard(brd);
 }
