@@ -23,19 +23,23 @@ bool queen(board brd, int start[2], int end[2]);
 bool isEnPassant(board brd, int start[2], int end[2]);
 int sign(int x);
 bool isWithinBoard(int position[2]);
+bool isChecked(board brd, int spot[2], color color);
+bool isKingChecked(board brd, color color);
 
 //unit test functions
 void move_unitTests();
 void common_unitTest();
 void pawn_unitTest();
 void bishop_unitTest();
+void knight_unitTest();
 
 bool isValidMove(board brd, int start[2], int end[2]) {
   if(!isWithinBoard(start) || !isWithinBoard(end) || (start[X] == end[X] && start[Y] == end[Y])) return false;
   piece * mover = brd[start[X]][start[Y]];
   if(mover == NULL) return false;
-  if ((brd[end[X]][end[Y]] != NULL) && (brd[end[X]][end[Y]]->color == mover->color)) return false;// TODO: does this apply ?
+  if((brd[end[X]][end[Y]] != NULL) && (brd[end[X]][end[Y]]->color == mover->color)) return false;// TODO: does this apply ?
   printPiece(mover);
+  if(isKingChecked(brd, mover->color) && mover->type != KING) return false;
   switch(mover->type) {
   case BISHOP:
     return bishop(brd, start, end);
@@ -90,11 +94,16 @@ bool castle(board brd, int start[2], int end[2]) {
 }
 
 bool king(board brd, int start[2], int end[2]) {
-  return false;
+  int move[2] = { end[X] - start[X], end[Y] - start[Y] };
+  if(abs(move[X]) > 1 || abs(move[Y]) > 1) return false;
+  if(isChecked(brd, end, brd[start[X]][start[Y]]->color)) return false;
+  return true;
 }
 
 bool knight(board brd, int start[2], int end[2]) {
-  return false;
+  int move[2] = { end[X] - start[X], end[Y] - start[Y] };
+  if(!((abs(move[X]) == 1 && abs(move[Y]) == 2) || (abs(move[X]) == 2 && abs(move[Y]) == 1))) return false;
+  return true;
 }
 
 bool pawn(board brd, int start[2], int end[2]) {
@@ -102,12 +111,14 @@ bool pawn(board brd, int start[2], int end[2]) {
   piece * mover = brd[start[X]][start[Y]];
   if(abs(move[X]) > 1) return false;
   if(abs(move[Y]) > 2) return false;
-  if(abs(move[Y]) == 2 && mover->hasMoved) return false;
+  //if double move check that piece never moved and it is not blocked
+  if(abs(move[Y]) == 2 && mover->hasMoved && brd[start[X]][start[Y] + sign(move[Y])] != NULL) return false;
   //if it move horizontally it must take a piece or en passent
   if(abs(move[X]) == 1 && ((brd[end[X]][end[Y]] == NULL) || isEnPassant(brd, start, end))) return false;
   //black starts at the top and moves down
   if(mover->color == BLACK && sign(move[Y]) == -1) return false;
   if(mover->color == WHITE && sign(move[Y]) == 1) return false;
+  //TODO: check for block
   return true;
 }
 
@@ -117,6 +128,33 @@ bool isEnPassant(board brd, int start[2], int end[2]) {
 
 bool queen(board brd, int start[2], int end[2]) {
   return bishop(brd, start, end) || castle(brd, start, end);// TODO: exlc castling
+}
+
+// is a color piece safe on this spot?
+bool isChecked(board brd, int spot[2], color color) {
+  for(int i = 0; i < SIZE; ++i) {
+    for(int j = 0; j < SIZE; ++j) {
+      if(brd[i][j] != NULL && brd[i][j]->color != color) {
+        int attackPosition[2] = { i, j };
+        if(isValidMove(brd, attackPosition, spot)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+// is color king checked by any ~color piece
+bool isKingChecked(board brd, color color) {
+  for(int i = 0; i < SIZE; ++i) {
+    for(int j = 0; j < SIZE; ++j) {
+      if(brd[i][j] != NULL && brd[i][j]->color == color && brd[i][j] -> type == KING) {
+        int kingPosition[2] = { i, j };
+        return isChecked(brd, kingPosition, color);
+      }
+    }
+  }
 }
 
 int sign(int x) {
@@ -131,9 +169,12 @@ void move_unitTests() {
   sput_run_test(common_unitTest);
   sput_leave_suite();
 
-
   sput_enter_suite("move.pawn");
   sput_run_test(pawn_unitTest);
+  sput_leave_suite();
+
+  sput_enter_suite("move.knight");
+  sput_run_test(knight_unitTest);
   sput_leave_suite();
 
   sput_enter_suite("move.bishob");
@@ -185,6 +226,40 @@ void pawn_unitTest() {
   sput_fail_unless(isValidMove(brd, blkStart, blkEndDouble), "2 postion move");
   sput_fail_unless(isValidMove(brd, blkStart, blkEndTake), "valid take");
   sput_fail_unless(!isValidMove(brd, blkStart, blkEndTake2), "valid take, no piece there");
+
+  int whtStart[2] = { 1, 6 };
+  int whtEndSingle[2] = { 1, 5 };
+  int whtEndDouble[2] = { 1, 4 };
+  int whtEndTake[2] = { 2, 5 };
+  int whtEndTake2[2] = { 0, 5 };
+  brd[whtStart[X]][whtStart[Y]] = createPiece(WHITE, PAWN);
+  brd[whtEndTake[X]][whtEndTake[Y]] = createPiece(BLACK, PAWN);
+  sput_fail_unless(isValidMove(brd, whtStart, whtEndSingle), "1 postion move");
+  sput_fail_unless(isValidMove(brd, whtStart, whtEndDouble), "2 postion move");
+  sput_fail_unless(isValidMove(brd, whtStart, whtEndTake), "valid take");
+  sput_fail_unless(!isValidMove(brd, whtStart, whtEndTake2), "valid take, no piece there");
+
+  freeBoard(brd);
+}
+
+
+void knight_unitTest() {
+  board brd = createBoard();
+
+  int start[2] = { 3, 3 };
+  brd[start[X]][start[Y]] = createPiece(BLACK, KNIGHT);
+
+  int pstve[2] = { 4, 5 };
+  sput_fail_unless(isValidMove(brd, start, pstve), "valid move");
+
+  int ngtve[2] = {1 , 2};
+  sput_fail_unless(isValidMove(brd, start, ngtve), "valid move.");
+
+  int noY[2] = {1 , 3};
+  sput_fail_unless(!isValidMove(brd, start, noY), "O y component");
+
+  int noX[2] = {3 , 5};
+  sput_fail_unless(!isValidMove(brd, start, noX), "O x component");
 
   freeBoard(brd);
 }
