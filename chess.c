@@ -11,6 +11,7 @@
 #include <string.h>
 #include <math.h>
 #include "chess.h"
+#include <ctype.h>
 
 board createBoard();
 board startingPositions(board brd);
@@ -19,10 +20,16 @@ void printPiece(piece * p);
 void freeBoard(board brd);
 void freePieces(board brd);
 void printBoard(board brd);
+board cloneBoard(board brd);
+piece * clonePiece(piece * p);
+piece * charToPiece(char c);
+board stringToBoard(char * str);
+bool boardsEqual(board a, board b);
 //unit test functions
 void unitTests();
 void chess_unitTests();
 void createBoard_test();
+void stringToBoard_test();
 
 int main(int argc, const char * argv[]) {
   if(TESTING) {
@@ -89,30 +96,59 @@ board startingPositions(board brd) {
   for(int i = 0; i < SIZE; ++i) {
     brd[i][0] = createPiece(BLACK, TOP_ROW[i]);
     brd[i][1] = createPiece(BLACK, PAWN);
-    brd[i][6] = createPiece(WHITE, PAWN);
-    brd[i][7] = createPiece(WHITE, BOTTOM_ROW[i]);
+    brd[i][SIZE - 2] = createPiece(WHITE, PAWN);
+    brd[i][SIZE - 1] = createPiece(WHITE, BOTTOM_ROW[i]);
   }
   return brd;
 }
 
-/* board loadBoard(char * str) { */
-/*   board brd = createBoard(); */
+board stringToBoard(char * str) {
+  board brd = createBoard();
+  //  char * line = NULL;
+  sprint(str);
+  int i = 0, j = 0;
+  for(j = 0; j < SIZE; ++j) {
+    for(i = 0; i < SIZE; ++i) {
+      char c = str[i + (j * SIZE)];
+      piece * p = charToPiece(c);
+      brd[i][j] = p;
+    }
+  }
+  return brd;
+}
 
-/*   const char newline[2] = '\n'; */
-/*   char *token; */
-
-/*   /\* get the first token *\/ */
-/*   token = strtok(str, newline); */
-
-/*   /\* walk through other tokens *\/ */
-/*   while( token != NULL ) { */
-/*     printf( " %s\n", token ); */
-
-/*     token = strtok(NULL, s); */
-/*   } */
-
-/*   return(0); */
-/* } */
+piece * charToPiece(char c) {
+  pieceType type;
+  switch(toupper(c)) {
+  case 'B':
+    type = BISHOP;
+    break;
+  case 'C':
+    type = CASTLE;
+    break;
+  case 'H':
+    type = KNIGHT;
+    break;
+  case 'K':
+    type = KING;
+    break;
+  case 'Q':
+    type = QUEEN;
+    break;
+  case 'P':
+    type = PAWN;
+    break;
+  default:
+    return NULL;
+  }
+  color color;
+  if(isupper((int) c)) {
+    color = BLACK;
+  } else {
+    color = WHITE;
+  }
+  return createPiece(color, type);
+}
 
 piece * createPiece(color color, pieceType type) {
   piece * pce = calloc(1, sizeof(piece));
@@ -148,7 +184,7 @@ void printBoard(board brd) {
     printf("\n");
     for(i = 0; i < SIZE; ++i) {
       if(brd[i][j] == NULL) {
-        sprint(".");
+        printf("-");
       } else {
         printPiece(brd[i][j]);
       }
@@ -157,17 +193,50 @@ void printBoard(board brd) {
   printf("\n");
 }
 
+board cloneBoard(board brd) {
+  board nBrd = createBoard();
+  int i, j;
+  for(j = 0; j < SIZE; ++j) {
+    for(i = 0; i < SIZE; ++i) {
+      if(brd[i][j] != NULL) {
+        nBrd[i][j] = clonePiece(brd[i][j]);
+      }
+    }
+  }
+  return nBrd;
+}
+
+piece * clonePiece(piece * p) {
+  if(p == NULL) return NULL;
+  piece * clone = calloc(1, sizeof(piece));
+  return memcpy(clone, p, sizeof(piece));
+}
+
+bool boardsEqual(board a, board b) {
+  int i, j;
+  for(j = 0; j < SIZE; ++j) {
+    for(i = 0; i < SIZE; ++i) {
+      if(a[i][j] != NULL && b[i][j] != NULL) {
+        if(memcmp(a[i][j], b[i][j], sizeof(piece)) != 0 ) return false;
+      } else if (a[i][j] != b[i][j]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 void freePieces(board brd) {
   for(int i = 0; i < SIZE ; ++i) {
       for(int j = 0; j < SIZE; ++j) {
         if(brd[i][j] != NULL) {
           free(brd[i][j]);
+          brd[i][j] = NULL;
         }
       }
   }
 }
 
-/* Frees a grid allocated with allocateGrid function */
 void freeBoard(board brd) {
   freePieces(brd);
   free((brd[0]));
@@ -198,6 +267,10 @@ void chess_unitTests() {
   sput_run_test(createBoard_test);
   sput_leave_suite();
 
+  sput_enter_suite("stringToBoard");
+  sput_run_test(stringToBoard_test);
+  sput_leave_suite();
+
   sput_finish_testing();
 }
 
@@ -209,9 +282,20 @@ void createBoard_test() {
   return;
 }
 
-void loadBoard_test() {
-  board brd = createBoard();
-  printBoard(brd);
-  freeBoard(brd);
+void stringToBoard_test() {
+  board parsedInitialBoard = stringToBoard("CHBKQBHC\
+PPPPPPPP\
+--------\
+--------\
+--------\
+--------\
+pppppppp\
+chbqkbhc");
+  printBoard(parsedInitialBoard);
+  board createdInitialBoard = createBoard();
+  startingPositions(createdInitialBoard);
+  sput_fail_unless(boardsEqual(parsedInitialBoard, createdInitialBoard), "parsedBoard with starting positions equals the a boards initialised using startingPositions f.");
+  freeBoard(createdInitialBoard);
+  freeBoard(parsedInitialBoard);
   return;
 }

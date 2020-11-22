@@ -1,11 +1,3 @@
-//
-//  main.h
-//  logo
-//
-//  Created by ben on 18/01/2015.
-//  Copyright (c) 2015 ben. All rights reserved.
-//
-
 #ifndef chess_main_h
 #define chess_main_h
 #include "sput.h"
@@ -15,11 +7,6 @@
 /******************************************************************************/
 //Options:
 #define TESTING 1//runs the test if set
-#define VERBOSE 1//prints info to terminal disable for speed.
-#define PRINT_ERRORS 1 //turn on/off stderr error messages.
-#define MAX_ERROR_STRING_SIZE 600
-
-
 
 /******************************************************************************/
 //chess.c
@@ -62,6 +49,10 @@ void printPiece(piece * p);
 void printBoard(board brd);
 void freeBoard(board brd);
 void freePieces(board brd);
+board cloneBoard(board brd);
+piece * clonePiece(piece * p);
+board stringToBoard(char * str);
+bool compareBoards(board a, board b);
 /******************************************************************************/
 //move.c
 typedef enum isValidMoveResult {
