@@ -28,10 +28,6 @@ int main(int argc, const char * argv[]) {
     unitTests();
     return 1;
   }
-  if(argc != 2) {
-    fprintf(stderr, "ERROR: expected a .txt file path as 1st argument.\nExiting.\n");
-    exit(0);
-  }
   return 1;
 }
 
@@ -241,6 +237,9 @@ void unitTests()
   printf("\n*                       UNIT TESTS                                 *\n\n");
   printf("********************************************************************\n\n");
 
+  printf("\n\n\n********************************************************************\n");
+  printf("\n*                       Testing chess.c                             *\n\n");
+  printf("********************************************************************\n\n");
   chess_unitTests();
 
   printf("\n\n\n********************************************************************\n");

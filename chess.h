@@ -4,6 +4,8 @@
 #include "debug.h"
 #include <stdbool.h>
 
+#define TESTING true
+
 // chess board size
 #define SIZE 8
 
