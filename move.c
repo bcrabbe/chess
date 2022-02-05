@@ -34,9 +34,8 @@ bool isValidMove(board brd, int start[2], int end[2]) {
   piece * mover = brd[start[X]][start[Y]];
   if(mover == NULL) return false;
   if((brd[end[X]][end[Y]] != NULL) && (brd[end[X]][end[Y]]->color == mover->color)) return false;// TODO: does this apply ?
-  printPiece(mover);
-  if(mover->type != KING && isKingChecked(brd, mover->color)) return false;
   if(isKingCheckedAfterMove(brd, mover->color, start, end)) return false;
+  if(mover->type != KING && isKingChecked(brd, mover->color)) return false;
   switch(mover->type) {
   case BISHOP:
     return bishop(brd, start, end);
